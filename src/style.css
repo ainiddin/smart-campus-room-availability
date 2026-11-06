@@ -1,0 +1,29 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; display: grid; place-items: center;
+  font-family: system-ui, sans-serif; background: #eef2f7; color: #1c2430; padding: 16px;
+}
+.card { width: 100%; max-width: 520px; background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 6px 24px rgba(0,0,0,.08); }
+.eyebrow { margin: 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #3a6ea5; font-weight: 600; }
+h1 { margin: 4px 0; font-size: 22px; }
+h2 { font-size: 15px; margin: 20px 0 8px; }
+.muted { margin: 0 0 16px; color: #6b7685; font-size: 14px; }
+form { display: grid; gap: 12px; }
+.row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+label { display: grid; gap: 4px; font-size: 14px; font-weight: 500; }
+input, select { padding: 10px; border: 1px solid #cfd6df; border-radius: 8px; font: inherit; width: 100%; background: #fff; }
+button { padding: 12px; border: 0; border-radius: 8px; background: #3a6ea5; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+button:hover { background: #2f5b88; }
+.result { margin-top: 16px; padding: 12px 14px; border-radius: 8px; display: grid; gap: 2px; }
+.result.ok { background: #e6f6ec; color: #1e6b3a; }
+.result.bad { background: #fdecec; color: #9b2c2c; }
+ul { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7; }
+@media (max-width: 420px) { .row { grid-template-columns: 1fr; } .card { padding: 18px; } h1 { font-size: 19px; } }
+fieldset.equipment { margin: 0; padding: 10px 12px; border: 1px solid #cfd6df; border-radius: 8px; }
+fieldset.equipment legend { padding: 0 4px; font-size: 14px; font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.chip { display: flex; align-items: center; gap: 6px; font-weight: 400; }
+.chip input { width: auto; padding: 0; }
+.result.empty { margin-top: 0; background: #fff6e0; color: #7a5200; }
+button:disabled, select:disabled { opacity: .55; cursor: not-allowed; }
+.result[hidden] { display: none; } /* .result sets display:grid, which overrode the hidden attribute */

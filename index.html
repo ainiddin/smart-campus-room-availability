@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Campus — Room Availability</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <main class="card">
+    <header>
+      <p class="eyebrow">Smart Campus</p>
+      <h1>Room Availability Checker</h1>
+      <p class="muted">Times are minutes since midnight (0–1440). Example: 600 = 10:00.</p>
+    </header>
+
+    <form id="form" novalidate>
+      <label>Attendees
+        <input type="number" id="attendees" min="1" step="1" inputmode="numeric" placeholder="Any" />
+      </label>
+      <fieldset class="equipment">
+        <legend>Equipment</legend>
+        <div id="equipment" class="chips"></div>
+      </fieldset>
+      <label>Room
+        <select id="room"></select>
+      </label>
+      <div id="empty" class="result empty" role="status" aria-live="polite" hidden></div>
+      <div class="row">
+        <label>Current time <input type="number" id="now" value="540" step="1" inputmode="numeric" /></label>
+        <label>Start <input type="number" id="start" value="660" step="1" inputmode="numeric" /></label>
+        <label>End <input type="number" id="end" value="720" step="1" inputmode="numeric" /></label>
+      </div>
+      <button type="submit" id="check">Check availability</button>
+    </form>
+
+    <div id="result" class="result" role="status" aria-live="polite" hidden></div>
+
+    <section>
+      <h2>Bookings in <span id="room-name"></span></h2>
+      <ul id="bookings"></ul>
+    </section>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
