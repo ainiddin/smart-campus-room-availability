@@ -98,6 +98,17 @@ describe('UI — availability result (AC3, F3, F5)', () => {
     expect(el<HTMLSelectElement>('room').value).toBe('A-101');
     expect(el('result').textContent).toMatch(/A-101/);
   });
+
+  it('UI-09 an empty Current time does not silently become 0', () => {
+    setValue('room', 'C-303', 'change');
+    setValue('now', '');
+    setValue('start', '60');
+    setValue('end', '120');
+    submit();
+    const result = el('result');
+    expect(result.className).toContain('bad');
+    expect(result.textContent).toMatch(/Unavailable/);
+  });
 });
 describe('UI — hidden boxes are really hidden (regression)', () => {
   it('UI-08 empty state and a stale result are not displayed', () => {
