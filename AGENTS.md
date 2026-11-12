@@ -8,6 +8,8 @@ User story: As a student, I want to filter rooms by attendees and equipment so I
 ## Room catalog
 Each room has: id, name, capacity, equipment (string[]), blocked, bookings.
 Catalog has at least 4 rooms (currently 5: A-101, B-202 blocked, C-303, D-404, E-505).
+Scope: the brief describes one fictional room; the project intentionally keeps
+the fictional 5-room catalog above.
 A-101, B-202 and C-303 keep their original blocked status and bookings (AC tests rely on them).
 
 ## Acceptance criteria
@@ -36,10 +38,10 @@ Fictional data only. TypeScript + Vite + Vitest. Minimal changes, no full rewrit
 ## Structure
 - src/lib/availability.ts: pure booking rules (AC1–AC5)
 - src/lib/filtering.ts: pure catalog filtering (F1, F2)
-- index.html, src/main.ts, src/style.css: UI
+- index.html, src/main.ts, src/style.css, src/ui/render.ts: UI
 - src/data.ts: demo fixtures
 - tests/fixtures.ts: test-only fixtures
-- tests/availability.test.ts, tests/filtering.test.ts: tests
+- tests/availability.test.ts, tests/filtering.test.ts, tests/ui.test.ts: tests
 
 ## Engineering rules
 Prefer pure functions and minimal changes; use at most 2 justified patterns
@@ -50,3 +52,14 @@ Do not change checkAvailability behaviour; do not weaken or delete existing test
 ## Verification
 Run the test script defined in package.json and add focused regression tests.
 Report changed files, rationale and test evidence.
+
+## Forbidden actions
+- Do not read, create, or commit secrets or `.env` files.
+- No deployment or publishing.
+- No Bolt Database, Supabase or other persistence without explicit approval.
+- No new dependencies and no network calls without approval.
+
+## Review gate
+1. Show the full diff of proposed changes first.
+2. Run `npm test` and report the actual output before proposing acceptance.
+3. Wait for explicit human approval before applying changes.
