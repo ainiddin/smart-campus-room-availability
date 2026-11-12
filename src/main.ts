@@ -55,7 +55,8 @@ function refresh(): void {
     showSelectedBookings();
     return;
   }
-  const num = (input: HTMLInputElement) => Number(input.value);
+  // RR-01: an empty field must not silently become 0
+  const num = (input: HTMLInputElement) => (input.value.trim() === '' ? NaN : Number(input.value));
   const [now, start, end] = timeInputs.map(num);
   renderResult(resultBox, checkAvailability(room, start, end, now));
   showSelectedBookings();
