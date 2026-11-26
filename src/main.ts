@@ -1,16 +1,7 @@
-import { checkAvailability, type Room } from './lib/availability';
-import { filterRooms, type RoomRequirements } from './lib/filtering';
-import { makeRooms } from './data';
-import {
-  renderBookings,
-  renderEmptyState,
-  renderEquipmentOptions,
-  renderResult,
-  renderRoomOptions,
-} from './ui/render';
-
-const rooms = makeRooms();
-const allEquipment = [...new Set(rooms.flatMap((r) => r.equipment))].sort();
+import { validate, type ValidateInput } from './lib/validate';
+import { checkAvailability } from './lib/availability';
+import { BOOKINGS, ROOM_NAME, bookingsSnapshot } from './data';
+import { renderResult, renderBookings } from './ui/render';
 
 function $<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -19,83 +10,129 @@ function $<T extends HTMLElement>(id: string): T {
 }
 
 const form = $<HTMLFormElement>('form');
-const roomSelect = $<HTMLSelectElement>('room');
-const attendeesInput = $<HTMLInputElement>('attendees');
-const equipmentBox = $('equipment');
-const emptyBox = $('empty');
+const startInput = $<HTMLInputElement>('start');
+const durationInput = $<HTMLInputElement>('duration');
+const blockedInput = $<HTMLInputElement>('blocked');
 const checkButton = $<HTMLButtonElement>('check');
 const resultBox = $('result');
-const timeInputs = ['now', 'start', 'end'].map((id) => $<HTMLInputElement>(id));
+const bookingsList = $('bookings');
+const countEl = $('count');
+const testButton = $<HTMLButtonElement>('run-tests');
+const testResults = $('test-results');
 
-let visibleRooms: Room[] = rooms;
-
-const selectedRoom = (): Room | undefined => visibleRooms.find((r) => r.id === roomSelect.value);
-
-function readRequirements(): RoomRequirements {
-  const attendees = Number(attendeesInput.value);
-  const equipment = [...equipmentBox.querySelectorAll<HTMLInputElement>('input:checked')].map((i) => i.value);
-  return { attendees: Number.isFinite(attendees) && attendees > 0 ? attendees : 0, equipment };
+function readInput(): ValidateInput {
+  return { start: startInput.value, duration: durationInput.value, blocked: blockedInput.checked };
 }
 
 function clearResult(): void {
   resultBox.hidden = true;
 }
 
-function showSelectedBookings(): void {
-  const room = selectedRoom();
-  $('room-name').textContent = room ? `${room.id} — ${room.name}` : '—';
-  $('bookings').innerHTML = room ? renderBookings(room) : '';
-}
-
-// F5: one place that reads the form, checks the selected room and renders the result.
-function refresh(): void {
-  const room = selectedRoom();
-  if (!room) {
-    clearResult();
-    showSelectedBookings();
+function runCheck(): void {
+  const now = Date.now();
+  const input = readInput();
+  const v = validate(input, now);
+  if (!v.ok) {
+    renderResult(resultBox, { available: false, code: v.code, message: v.message });
     return;
   }
-  // RR-01: an empty field must not silently become 0
-  const num = (input: HTMLInputElement) => (input.value.trim() === '' ? NaN : Number(input.value));
-  const [now, start, end] = timeInputs.map(num);
-  renderResult(resultBox, checkAvailability(room, start, end, now));
-  showSelectedBookings();
+  const startMs = new Date(input.start).getTime();
+  const endMs = startMs + Number(input.duration) * 60_000;
+  const result = checkAvailability(startMs, endMs, BOOKINGS, input.blocked);
+  renderResult(resultBox, result);
 }
 
-// F1/F2 via filterRooms; F4 empty state when nothing matches.
-function applyFilters(): void {
-  const resultWasShown = !resultBox.hidden;
-  const previous = roomSelect.value;
+// --- Test runner (8 cases) ---
 
-  visibleRooms = filterRooms(rooms, readRequirements());
-  const empty = visibleRooms.length === 0;
+interface TestCase {
+  id: string;
+  start: string;
+  duration: string;
+  blocked: boolean;
+  expected: string;
+}
 
-  roomSelect.innerHTML = renderRoomOptions(visibleRooms);
-  if (visibleRooms.some((r) => r.id === previous)) roomSelect.value = previous;
-  roomSelect.disabled = empty;
-  checkButton.disabled = empty;
-  emptyBox.hidden = !empty;
-  emptyBox.innerHTML = empty ? renderEmptyState() : '';
+const NOW_REFERENCE = new Date('2026-11-26T00:00').getTime();
 
-  if (empty) {
-    clearResult();
-    showSelectedBookings();
-  } else if (resultWasShown) {
-    refresh(); // selected room may have changed: keep the result in sync
-  } else {
-    showSelectedBookings();
+const TEST_CASES: TestCase[] = [
+  { id: 'T1', start: '2026-12-10T12:00', duration: '60', blocked: false, expected: 'OK' },
+  { id: 'T2', start: '2026-12-10T10:30', duration: '60', blocked: false, expected: 'OVERLAP' },
+  { id: 'T3', start: '2026-12-10T12:00', duration: '60', blocked: true, expected: 'ROOM_BLOCKED' },
+  { id: 'T4', start: '2026-12-10T12:00', duration: '0', blocked: false, expected: 'INVALID_DURATION' },
+  { id: 'T5', start: '2026-12-10T12:00', duration: '121', blocked: false, expected: 'INVALID_DURATION' },
+  { id: 'T6', start: '2025-01-01T10:00', duration: '60', blocked: false, expected: 'PAST_START' },
+  { id: 'T7', start: '2026-12-10T11:00', duration: '60', blocked: false, expected: 'OK' },
+];
+
+function runOne(tc: TestCase, now: number): string {
+  const v = validate({ start: tc.start, duration: tc.duration, blocked: tc.blocked }, now);
+  if (!v.ok) return v.code;
+  const startMs = new Date(tc.start).getTime();
+  const endMs = startMs + Number(tc.duration) * 60_000;
+  return checkAvailability(startMs, endMs, BOOKINGS, tc.blocked).code;
+}
+
+function runTests(): void {
+  const before = bookingsSnapshot();
+  const rows: { id: string; input: string; expected: string; observed: string; pass: boolean }[] = [];
+
+  for (const tc of TEST_CASES) {
+    const observed = runOne(tc, NOW_REFERENCE);
+    rows.push({
+      id: tc.id,
+      input: `${tc.start}, ${tc.duration}min${tc.blocked ? ', blocked' : ''}`,
+      expected: tc.expected,
+      observed,
+      pass: observed === tc.expected,
+    });
+  }
+
+  const after = bookingsSnapshot();
+  const t8Pass = before === after;
+  rows.push({
+    id: 'T8',
+    input: 'bookings JSON before/after',
+    expected: 'unchanged',
+    observed: t8Pass ? 'unchanged' : 'changed',
+    pass: t8Pass,
+  });
+
+  renderTestTable(rows);
+}
+
+function renderTestTable(
+  rows: { id: string; input: string; expected: string; observed: string; pass: boolean }[],
+): void {
+  testResults.hidden = false;
+  const table = testResults.querySelector('table')!;
+  const tbody = table.querySelector('tbody')!;
+  tbody.replaceChildren();
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    tr.className = r.pass ? 'pass' : 'fail';
+    const tdId = document.createElement('td');
+    tdId.textContent = r.id;
+    const tdInput = document.createElement('td');
+    tdInput.textContent = r.input;
+    const tdExpected = document.createElement('td');
+    tdExpected.textContent = r.expected;
+    const tdObserved = document.createElement('td');
+    tdObserved.textContent = r.observed;
+    const tdStatus = document.createElement('td');
+    tdStatus.textContent = r.pass ? 'PASS' : 'FAIL';
+    tr.append(tdId, tdInput, tdExpected, tdObserved, tdStatus);
+    tbody.appendChild(tr);
   }
 }
 
-equipmentBox.innerHTML = renderEquipmentOptions(allEquipment);
+// --- Wire up ---
+
+renderBookings(bookingsList, BOOKINGS, countEl);
 
 form.addEventListener('submit', (ev) => {
   ev.preventDefault();
-  refresh();
+  runCheck();
 });
-roomSelect.addEventListener('change', refresh);
-attendeesInput.addEventListener('input', applyFilters);
-equipmentBox.addEventListener('change', applyFilters);
-timeInputs.forEach((i) => i.addEventListener('input', clearResult));
-
-applyFilters();
+[startInput, durationInput].forEach((i) => i.addEventListener('input', clearResult));
+blockedInput.addEventListener('change', clearResult);
+testButton.addEventListener('click', runTests);

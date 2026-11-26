@@ -1,51 +1,31 @@
-// Smart Campus — UI rendering helpers.
-// Pure string builders plus one helper that updates a given element.
-// All room/booking text is escaped before it goes into innerHTML.
+// UI rendering. Uses textContent only, never innerHTML for dynamic text.
 
-import type { Decision, Room } from '../lib/availability';
+import type { AvailabilityResult, Booking } from '../lib/availability';
 
-export function escapeHtml(value: string | number): string {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-export function renderRoomOptions(rooms: readonly Room[]): string {
-  return rooms
-    .map((r) => {
-      const label = `${r.id} — ${r.name} (${r.capacity} seats)${r.blocked ? ' (blocked)' : ''}`;
-      return `<option value="${escapeHtml(r.id)}">${escapeHtml(label)}</option>`;
-    })
-    .join('');
-}
-
-export function renderEquipmentOptions(items: readonly string[]): string {
-  return items
-    .map(
-      (item) =>
-        `<label class="chip"><input type="checkbox" name="equipment" value="${escapeHtml(item)}" /> ${escapeHtml(item)}</label>`,
-    )
-    .join('');
-}
-
-export function renderBookings(room: Room): string {
-  return room.bookings.length
-    ? room.bookings
-        .map((b) => `<li><b>${escapeHtml(b.id)}</b> ${escapeHtml(b.start)}–${escapeHtml(b.end)}</li>`)
-        .join('')
-    : '<li class="muted">No bookings</li>';
-}
-
-export function renderEmptyState(): string {
-  return '<strong>No rooms match</strong><span>Reduce attendees or clear some equipment filters.</span>';
-}
-
-// Updates the given result element (keeps its role="status" / aria-live).
-export function renderResult(box: HTMLElement, decision: Decision): void {
+export function renderResult(box: HTMLElement, result: AvailabilityResult): void {
   box.hidden = false;
-  box.className = 'result ' + (decision.status === 'Available' ? 'ok' : 'bad');
-  box.innerHTML = `<strong>${escapeHtml(decision.status)}</strong><span>${escapeHtml(decision.reason)}</span>`;
+  box.className = 'result ' + (result.available ? 'ok' : 'bad');
+  box.querySelector('[data-role="badge"]')!.textContent = result.available ? 'Available' : 'Unavailable';
+  box.querySelector('[data-role="code"]')!.textContent = result.code;
+  box.querySelector('[data-role="message"]')!.textContent = result.message;
+}
+
+export function renderBookings(list: HTMLElement, bookings: readonly Booking[], countEl: HTMLElement): void {
+  list.replaceChildren();
+  if (bookings.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'muted';
+    li.textContent = 'No bookings.';
+    list.appendChild(li);
+  } else {
+    for (const b of bookings) {
+      const li = document.createElement('li');
+      const strong = document.createElement('strong');
+      strong.textContent = b.id;
+      li.appendChild(strong);
+      li.append(` ${b.start} to ${b.end}`);
+      list.appendChild(li);
+    }
+  }
+  countEl.textContent = String(bookings.length);
 }

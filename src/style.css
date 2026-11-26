@@ -1,29 +1,58 @@
 * { box-sizing: border-box; }
 body {
   margin: 0; min-height: 100vh; display: grid; place-items: center;
-  font-family: system-ui, sans-serif; background: #eef2f7; color: #1c2430; padding: 16px;
+  font-family: system-ui, -apple-system, sans-serif; background: #eef2f7; color: #1c2430; padding: 16px;
 }
-.card { width: 100%; max-width: 520px; background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 6px 24px rgba(0,0,0,.08); }
+.card {
+  width: 100%; max-width: 560px; background: #fff; border-radius: 14px; padding: 28px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.08);
+}
 .eyebrow { margin: 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #3a6ea5; font-weight: 600; }
 h1 { margin: 4px 0; font-size: 22px; }
-h2 { font-size: 15px; margin: 20px 0 8px; }
-.muted { margin: 0 0 16px; color: #6b7685; font-size: 14px; }
-form { display: grid; gap: 12px; }
-.row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+h2 { font-size: 16px; margin: 24px 0 8px; }
+.muted { margin: 0; color: #6b7685; font-size: 14px; }
+form { display: grid; gap: 14px; }
 label { display: grid; gap: 4px; font-size: 14px; font-weight: 500; }
+label.check-row { display: flex; align-items: center; gap: 8px; font-weight: 400; }
 input, select { padding: 10px; border: 1px solid #cfd6df; border-radius: 8px; font: inherit; width: 100%; background: #fff; }
-button { padding: 12px; border: 0; border-radius: 8px; background: #3a6ea5; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+label.check-row input { width: auto; }
+button {
+  padding: 12px; border: 0; border-radius: 8px; background: #3a6ea5; color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+  transition: background .15s ease;
+}
 button:hover { background: #2f5b88; }
-.result { margin-top: 16px; padding: 12px 14px; border-radius: 8px; display: grid; gap: 2px; }
+.result {
+  margin-top: 16px; padding: 14px 16px; border-radius: 10px; display: grid; gap: 6px;
+}
 .result.ok { background: #e6f6ec; color: #1e6b3a; }
 .result.bad { background: #fdecec; color: #9b2c2c; }
+.result-row { display: flex; align-items: center; gap: 10px; }
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: rgba(255,255,255,.6);
+}
+.result.ok .badge { background: #2d8a4e; color: #fff; }
+.result.bad .badge { background: #c0392b; color: #fff; }
+.code { font-size: 12px; opacity: .8; font-family: ui-monospace, monospace; }
+.message { font-size: 14px; line-height: 1.5; }
 ul { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7; }
-@media (max-width: 420px) { .row { grid-template-columns: 1fr; } .card { padding: 18px; } h1 { font-size: 19px; } }
-fieldset.equipment { margin: 0; padding: 10px 12px; border: 1px solid #cfd6df; border-radius: 8px; }
-fieldset.equipment legend { padding: 0 4px; font-size: 14px; font-weight: 500; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px 14px; }
-.chip { display: flex; align-items: center; gap: 6px; font-weight: 400; }
-.chip input { width: auto; padding: 0; }
-.result.empty { margin-top: 0; background: #fff6e0; color: #7a5200; }
-button:disabled, select:disabled { opacity: .55; cursor: not-allowed; }
-.result[hidden] { display: none; } /* .result sets display:grid, which overrode the hidden attribute */
+hr { border: 0; border-top: 1px solid #e3e8ef; margin: 24px 0; }
+.test-section { display: grid; gap: 12px; }
+#run-tests { background: #4a5568; }
+#run-tests:hover { background: #3a4554; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 6px 8px; border: 1px solid #e3e8ef; text-align: left; }
+th { background: #f5f8fb; font-weight: 600; }
+tr.pass { background: #f0fbf3; }
+tr.fail { background: #fdf0f0; }
+td:last-child { font-weight: 700; }
+tr.pass td:last-child { color: #1e6b3a; }
+tr.fail td:last-child { color: #c0392b; }
+.result[hidden] { display: none; }
+#test-results[hidden] { display: none; }
+@media (max-width: 480px) {
+  .card { padding: 20px; }
+  h1 { font-size: 19px; }
+  table { font-size: 12px; }
+  th, td { padding: 4px 6px; }
+}
